@@ -4,6 +4,7 @@
 #include "Vector2.h"
 #include "Keyboard.h"
 #include "Mouse.h"
+#include "Graphics.h"
 
 class RenderWindow
 {
@@ -14,6 +15,8 @@ public:
 
     bool ProcessMessages();
     void Update();
+
+    void Render();
 
     LRESULT WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -31,4 +34,6 @@ private:
 
     Keyboard keyboard;
     Mouse mouse;
+
+    Graphics gfx;
 };

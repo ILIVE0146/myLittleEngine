@@ -42,6 +42,11 @@ bool RenderWindow::Create(HINSTANCE Hinstance, std::string windowTitle, std::str
 	SetForegroundWindow(this->handle);
 	SetFocus(this->handle);
 
+	if (!gfx.initialize(this->handle, windowSize))
+	{
+		return false;
+	}
+	
 	return true;
 }
 
@@ -50,7 +55,7 @@ bool RenderWindow::ProcessMessages()
 	MSG msg{};
 	ZeroMemory(&msg, sizeof(MSG));
 
-	if (PeekMessage(&msg, this->handle, 0, 0, PM_REMOVE))
+	while (PeekMessage(&msg, this->handle, 0, 0, PM_REMOVE))
 	{
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
@@ -89,6 +94,11 @@ void RenderWindow::Update()
 			OutputDebugStringA(outmsg.c_str());
 		}
 	}
+}
+
+void RenderWindow::Render()
+{
+	gfx.RenderFrame();
 }
 
 LRESULT RenderWindow::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
