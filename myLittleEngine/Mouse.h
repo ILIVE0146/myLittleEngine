@@ -15,6 +15,8 @@ public:
 	void onWheelDown(Vector2i pos);
 	void onMouseMove(Vector2i pos);
 
+	void onMouseMoveRaw(Vector2i pos);
+
 	inline bool isLeftPressed() const { return leftKey; }
 	inline bool isRightPressed() const { return rightKey; }
 	inline bool isMiddlePressed() const { return middleKey; }

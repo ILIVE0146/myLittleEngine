@@ -1,5 +1,23 @@
 #include "RenderWindow.h"
 #include "GlobalResources.h"
+#include <memory>
+
+RenderWindow::RenderWindow()
+{
+	static bool raw_input_initialized = false;
+	if (raw_input_initialized == false)
+	{
+		RAWINPUTDEVICE rid{ 0x01 /*Mouse*/, 0x02, 0, NULL };
+
+		if (RegisterRawInputDevices(&rid, 1, sizeof(rid)) == false)
+		{
+			ErrorLogger::Log(GetLastError(), "Failed to register raw input devices.");
+			exit(-1);
+		}
+
+		raw_input_initialized = true;
+	}
+}
 
 bool RenderWindow::Create(HINSTANCE Hinstance, std::string windowTitle, std::string windowClass, Vector2i windowSize)
 {
@@ -54,12 +72,22 @@ bool RenderWindow::ProcessMessages()
 
 void RenderWindow::Update()
 {
-	while (!mouse.isEventBufferEmpty())
+	/*while (!mouse.isEventBufferEmpty())
 	{
 		MouseEvent me = mouse.readEvent();
 		std::string outmsg = "x: " + std::to_string(me.getPosX()) + '\n';
 		outmsg += "y: " + std::to_string(me.getPosY()) + '\n';
 		OutputDebugStringA(outmsg.c_str());
+	}*/
+
+	while (!mouse.isEventBufferEmpty())
+	{
+		MouseEvent me = mouse.readEvent();
+		if (me.getType() == MouseEvent::EventType::RAW_MOVE)
+		{
+			std::string outmsg = "x: " + std::to_string(me.getPosX()) + '\n' + "y: " + std::to_string(me.getPosY()) + '\n';
+			OutputDebugStringA(outmsg.c_str());
+		}
 	}
 }
 
@@ -76,7 +104,7 @@ LRESULT RenderWindow::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		}
 		else
 		{
-			const bool wasPressed = lParam & (1 << 30);
+			const bool wasPressed = lParam & (static_cast<long long>(1) << 30);
 			if (!wasPressed)
 			{
 				keyboard.onChar(keycode);
@@ -93,7 +121,7 @@ LRESULT RenderWindow::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		}
 		else
 		{
-			const bool wasPressed = lParam & (1 << 30);
+			const bool wasPressed = lParam & (static_cast<long long>(1) << 30);
 			if (!wasPressed)
 			{
 				keyboard.onKeyPressed(keycode);
@@ -171,6 +199,25 @@ LRESULT RenderWindow::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			mouse.onWheelDown({ x, y });
 		}
 		return 0;
+	}
+	case WM_INPUT:
+	{
+		UINT dataSize = 0u;
+		GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, NULL, &dataSize, sizeof(RAWINPUTHEADER));
+		
+		if (dataSize > 0)
+		{
+			std::unique_ptr<BYTE[]> rawdata = std::make_unique<BYTE[]>(dataSize);
+			if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, rawdata.get(), &dataSize, sizeof(RAWINPUTHEADER)) == dataSize)
+			{
+				RAWINPUT* raw = reinterpret_cast<RAWINPUT*>(rawdata.get());
+				if (raw->header.dwType == RIM_TYPEMOUSE)
+				{
+					mouse.onMouseMoveRaw(Vector2i(raw->data.mouse.lLastX, raw->data.mouse.lLastY));
+				}
+			}
+		}
+		return DefWindowProc(hwnd, uMsg, wParam, lParam);
 	}
 	default:
 		return DefWindowProc(hwnd, uMsg, wParam, lParam);

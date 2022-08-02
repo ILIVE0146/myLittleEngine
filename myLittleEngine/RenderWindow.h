@@ -8,6 +8,8 @@
 class RenderWindow
 {
 public:
+
+    RenderWindow();
     bool Create(HINSTANCE Hinstance, std::string windowTitle, std::string windowClass, Vector2i windowSize);
 
     bool ProcessMessages();

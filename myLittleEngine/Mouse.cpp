@@ -50,6 +50,11 @@ void Mouse::onMouseMove(Vector2i pos)
 	this->eventBuffer.push(MouseEvent(MouseEvent::EventType::Move, pos));
 }
 
+void Mouse::onMouseMoveRaw(Vector2i pos)
+{
+	this->eventBuffer.push(MouseEvent(MouseEvent::EventType::RAW_MOVE, pos));
+}
+
 MouseEvent Mouse::readEvent()
 {
 	if (this->eventBuffer.empty())
